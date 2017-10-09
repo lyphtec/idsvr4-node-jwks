@@ -1,13 +1,11 @@
-# Securing a Node API with tokens from IdentityServer4 using JWKS
-
-This quickstart / sample shows how can you secure a Node (Express) API using [IdentityServer4](http://identityserver.io/) as your security token service.
-Specifically, it uses the [JWKS](https://auth0.com/docs/jwks) endpoint and RS256 algorithm.
+# Securing Node APIs with tokens from IdentityServer4 using JWKS
 
 ## Intro
 
-The [IdentityServer4.Samples](https://github.com/IdentityServer/IdentityServer4.Samples) repo contains a sample NodeJsApi implementation.  But this sample is pretty basic and uses the [express-oidc-jwks-verify](https://github.com/PDMLab/express-oidc-jwks-verify) module.  I found that there are some bugs with this module, it's not very robust, and it doesn't emit meaningful error messages.  It also doesn't scale very well as there is no caching and the fact that it will [write out a "tmp.crt" cert file](https://github.com/PDMLab/express-oidc-jwks-verify/blob/master/index.js#L53) to the local disk.  So it's not a production quality module to use in Node apps.
+This quickstart / sample shows how can you secure a Node (Express) API using [IdentityServer4](http://identityserver.io/) as the security token service.
+Specifically, it uses the [JWKS](https://auth0.com/docs/jwks) endpoint and RS256 algorithm.
 
-As such, in this sample we will use 2 higher quality modules from [Auth0](https://auth0.com/) to deal with JWTs & JWKS:
+We will use 2 modules from [Auth0](https://auth0.com/) to deal with JWTs & JWKS:
 
 - [express-jwt](https://github.com/auth0/express-jwt)
 - [jwks-rsa](https://github.com/auth0/node-jwks-rsa)
@@ -21,12 +19,14 @@ IdentityServer provides a JWKS endpoint at the URI specified with the `jwks_uri`
 
 ## Repo Structure
 
-This repo contains 3 sample projects:
+This repo contains 4 sample projects:
 
 - **idserv4** - Basic IdentityServer4 setup with Client Credentials as per the [Quickstarts #1](https://identityserver4.readthedocs.io/en/release/quickstarts/1_client_credentials.html) from the official docs. The difference being that this ASP.NET Core app is using .NET Core 2.0 and the latest version 2.0.0-rc1 of the IdentityServer4 package instead.  We also setup a self-signed certificate (cert.pfx) for credential signing that will be explained below. When running, this will be accessible at http://localhost:5000 
-- **console** - Sample .NET Core 2.0 Console app as per the ["Creating the client"](https://identityserver4.readthedocs.io/en/release/quickstarts/1_client_credentials.html#creating-the-client) section from the docs.  This app will obtain the access token from IdentityServer and will use it to call the sample Node API at http://localhost:5002/me
+- **console** - Sample .NET Core 2.0 Console app as per the ["Creating the client"](https://identityserver4.readthedocs.io/en/release/quickstarts/1_client_credentials.html#creating-the-client) section from the docs.  This app demonstrates using the ClientCredentials grant type to obtain the access token from IdentityServer and use it to call the sample Node API at http://localhost:5002/me
 - **node-api** - Node Express based sample API which is the whole point of this repo!  This is hosted at http://localhost:5002 by default.  There's only 1 Javascript file (index.js) that shows the implementation, but it's documented with useful comments and should be fairly easy to follow.
+- **client** - Javascript OIDC client based on the [JsOidc sample](https://github.com/IdentityServer/IdentityServer4.Samples/tree/release/Clients/src/JsOidc). This uses [webpack-dev-server](https://webpack.github.io/docs/webpack-dev-server.html) to host the client app.  The "Call API" button is configured to access the Node API at http://localhost:5002/me
 
+  Two test users are configured with username/password: `bob/bob` and `alice/alice` that you can use to login.
 
 ## Setup the signing certificate
 
@@ -40,7 +40,9 @@ public void ConfigureServices(IServiceCollection services)
     services.AddIdentityServer()
         .AddSigningCredential(Config.GetSigningCertificate(_env.ContentRootPath))
         .AddInMemoryApiResources(Config.GetApiResources())
-        .AddInMemoryClients(Config.GetClients());
+        .AddInMemoryIdentityResources(Config.GetIdentityResources())
+        .AddInMemoryClients(Config.GetClients())
+        .AddTestUsers(TestUsers.Users);
 }
 ```
 
@@ -64,7 +66,12 @@ public class Config
 ...
 ```
 
-Here we are supplying a self-signed PFX (cert.pfx), generated using OpenSSL as per the [create_signing_cert.sh](https://github.com/IdentityServer/IdentityServer4.Samples/blob/release/NodeJsApi/create_signing_cert.sh) script from the NodeJsApi sample.
+Included in the sample is a self-signed PFX (`cert.pfx`) generated using OpenSSL.  You can generate your own self-signed certs using the following commands:
+
+```bash
+openssl req -x509 -days 365 -newkey rsa:4096 -keyout key.pem -out cert.pem
+openssl pkcs12 -export -in cert.pem -inkey key.pem -out cert.pfx
+```
 
 ### OpenSSL on Windows
 
@@ -75,7 +82,7 @@ As an aside, you can get OpenSSL for Windows [from here](http://slproweb.com/pro
 Instead of using OpenSSL, you can also [use Powershell](https://www.petri.com/create-self-signed-certificate-using-powershell) to generate self-signed certs.
 
 
-# Securing Node APIs
+## Securing Node APIs
 
 The main gist of how to do this is defined with the `auth` middleware in the sample Node app:
 
@@ -104,7 +111,20 @@ const auth = jwt({
 ```
 Here we specify the IdentityServer4 instance (http://localhost:5000), and setup some options on the `jwks-rsa` module. This module supports validating the scope in the token against a specific audience (`api1` in this case).
 
-# How to use
+## How to use (with Docker)
+
+1. Clone this repo:
+    ```bash
+    git clone https://github.com/lyphtec/idserv4-node-jwk
+    cd idserv4-node-jwks
+    ```
+1. Run docker-compose:
+    ```bash
+    docker-compose up
+    ```
+1. Access the client app at http://localhost:5005
+
+## How to use (without Docker)
 
 1. Clone this repo:
     ```bash
@@ -138,5 +158,12 @@ Here we specify the IdentityServer4 instance (http://localhost:5000), and setup 
     dotnet run
     ```
     The decoded payload from the access token should match the claims returned from the secured Node API endpoint.
+1. Run the sample client Javascript app:
+    ```bash
+    cd /src/client
+    yarn install    # (or npm install)
+    yarn start      # (or npm start)
+    ```
+    App should be up & running at http://localhost:5005
 
 Our Node API is now secured by IdentityServer!

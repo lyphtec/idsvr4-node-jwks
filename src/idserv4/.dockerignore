@@ -1,0 +1,9 @@
+.vs
+.vscode
+bin
+obj
+Properties
+*.user
+Dockerfile*
+docker-compose*
+.dockerignore

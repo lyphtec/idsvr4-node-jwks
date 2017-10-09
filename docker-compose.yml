@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  idserv:
+    image: idserv4
+    container_name: idserv4
+    build: ./src/idserv4
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5000/
+      - IS_DOCKER=true
+    ports:
+      - 5000:5000
+
+  api:
+    image: node-api
+    container_name: node-api
+    build: ./src/node-api
+    links:
+      - idserv
+    environment:
+      NODE_ENV: development
+      DEBUG: "*"
+      IS_DOCKER: "true"
+    ports:
+      - 5002:5002
+      - 9229:9229
+    volumes:
+      - ./src/node-api:/app
+    command: node --inspect index.js
+
+  client:
+    image: js-oidc-client
+    container_name: js-oidc-client
+    build: ./src/client
+    environment:
+      NODE_ENV: development
+    links:
+      - idserv
+      - api
+    ports:
+      - 5005:5005

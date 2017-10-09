@@ -26,8 +26,8 @@ app.use(morgan('dev'));     // HTTP request logger - see https://expressjs.com/e
 if (isDevelopment)
     app.use(errorHandler());    // WARNING: only use this in dev mode to show full error stack traces - see https://expressjs.com/en/resources/middleware/errorhandler.html
 
-// reference to our IdentityServer instance
-const issuer = 'http://localhost:5000';     // can potentially use the "iss" claim from the access token instead
+// reference to our IdentityServer instance. If we are running in Docker then use service name of IdentityServer.
+const issuer = process.env.IS_DOCKER ? 'http://idserv:5000' : 'http://localhost:5000';     // can potentially use the "iss" claim from the access token instead
 
 // define our authentication middleware
 const auth = jwt({

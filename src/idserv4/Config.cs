@@ -5,6 +5,10 @@ using System.Threading.Tasks;
 using IdentityServer4.Models;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
+using IdentityServer4;
+using IdentityServer4.Test;
+using System.Security.Claims;
+using IdentityModel;
 
 namespace IdServ
 {
@@ -30,6 +34,16 @@ namespace IdServ
             };
         }
 
+        public static IEnumerable<IdentityResource> GetIdentityResources()
+        {
+            return new List<IdentityResource>
+            {
+                new IdentityResources.OpenId(),
+                new IdentityResources.Profile(),
+                new IdentityResources.Email()
+            };
+        }
+
         public static IEnumerable<Client> GetClients()
         {
             return new List<Client>
@@ -43,6 +57,37 @@ namespace IdServ
                         new Secret("secret".Sha256())
                     },
                     AllowedScopes = { "api1" }
+                },
+
+                // Javascript client
+                new Client
+                {
+                    ClientId = "js_oidc",
+                    ClientName = "Javascript Client",
+                    AllowedGrantTypes = GrantTypes.Implicit,
+                    AllowAccessTokensViaBrowser = true,
+
+                    AbsoluteRefreshTokenLifetime = 200,
+                    IdentityTokenLifetime = 15,
+                    AccessTokenLifetime = 100,
+                    AuthorizationCodeLifetime = 15,
+                    SlidingRefreshTokenLifetime = 120,
+
+                    RedirectUris =
+                    {
+                        "http://localhost:5005/callback.html",
+                        "http://localhost:5005/silent.html"
+                    },
+                    PostLogoutRedirectUris = { "http://localhost:5005/index.html" },
+                    AllowedCorsOrigins =     { "http://localhost:5005" },
+
+                    AllowedScopes =
+                    {
+                        IdentityServerConstants.StandardScopes.OpenId,
+                        IdentityServerConstants.StandardScopes.Profile,
+                        IdentityServerConstants.StandardScopes.Email,
+                        "api1"
+                    }
                 }
             };
         }
