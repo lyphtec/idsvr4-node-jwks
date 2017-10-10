@@ -16,7 +16,7 @@ services:
     image: node-api
     container_name: node-api
     build: ./src/node-api
-    links:
+    depends_on:
       - idserv
     environment:
       NODE_ENV: development
@@ -35,7 +35,7 @@ services:
     build: ./src/client
     environment:
       NODE_ENV: development
-    links:
+    depends_on:
       - idserv
       - api
     ports:
