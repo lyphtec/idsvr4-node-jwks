@@ -16,10 +16,9 @@ const config = {
         disableHostCheck: true
     },
     plugins: [
-        new CleanWebpackPlugin(['dist/*']),
+        new CleanWebpackPlugin(),
         new CopyWebpackPlugin([
             { from: 'node_modules/bootstrap/dist/css', to: 'css/' },
-            { from: 'node_modules/bootstrap/dist/fonts', to: 'fonts/' },
             { from: 'node_modules/oidc-client/dist/oidc-client.min.js' }
         ]),
         new HtmlWebpackPlugin({
@@ -58,7 +57,7 @@ const config = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['env']
+                        presets: ['@babel/preset-env']
                     }
                 }
             }
