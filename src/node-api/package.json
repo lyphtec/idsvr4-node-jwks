@@ -1,6 +1,6 @@
 {
   "name": "node-api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "index.js",
   "license": "(MIT OR Apache-2.0)",
   "author": "Nguyen Ly <lyphtec@gmail.com>",
@@ -18,11 +18,11 @@
   "dependencies": {
     "cors": "^2.8.5",
     "debug": "^4.1.1",
-    "errorhandler": "^1.5.0",
-    "express": "^4.16.4",
+    "errorhandler": "^1.5.1",
+    "express": "^4.17.1",
     "express-jwt": "^5.3.1",
     "helmet": "^3.18.0",
-    "jwks-rsa": "^1.4.0",
+    "jwks-rsa": "^1.5.1",
     "morgan": "^1.9.1"
   },
   "devDependencies": {
