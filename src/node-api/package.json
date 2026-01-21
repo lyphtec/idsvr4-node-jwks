@@ -20,7 +20,7 @@
     "debug": "^4.1.1",
     "errorhandler": "^1.5.1",
     "express": "^4.17.1",
-    "express-jwt": "^5.3.1",
+    "express-jwt": "^6.0.0",
     "helmet": "^3.18.0",
     "jwks-rsa": "^1.5.1",
     "morgan": "^1.9.1"
